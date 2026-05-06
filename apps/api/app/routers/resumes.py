@@ -3,7 +3,9 @@ from hashlib import sha256
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from starlette.concurrency import run_in_threadpool
 
+from app.schemas.profile import ProfileExtractionMetadata
 from app.schemas.resume import ResumeAnalyzeResponse, ResumeFileInfo, ResumeSection, ResumeTextPayload
+from app.services.extractor import extract_resume_profile
 from app.services.pdf_parser import EmptyPdfTextError, PdfParsingError, extract_pdf_text
 from app.services.text_cleaner import clean_resume_text, split_resume_sections
 
@@ -74,6 +76,7 @@ async def analyze_resume(file: UploadFile = File(...)) -> ResumeAnalyzeResponse:
         ResumeSection(title=section.title, content=section.content)
         for section in sections
     ]
+    profile_result = await extract_resume_profile(cleaned_text)
 
     resume_id = sha256(pdf_bytes).hexdigest()
     filename = file.filename or "resume.pdf"
@@ -90,5 +93,10 @@ async def analyze_resume(file: UploadFile = File(...)) -> ResumeAnalyzeResponse:
             raw=extraction.raw_text,
             cleaned=cleaned_text,
             sections=resume_sections,
+        ),
+        profile=profile_result.profile,
+        profile_extraction=ProfileExtractionMetadata(
+            source=profile_result.source,
+            warnings=profile_result.warnings,
         ),
     )

@@ -77,7 +77,7 @@ services/text_cleaner.py
 - 已补充结构化错误响应和上传文件响应模型。
 - 已通过 `uv run python -m compileall -q main.py app`、`pnpm lint`、`pnpm check-types`、`pnpm build`。
 
-## 阶段三：关键信息抽取
+## 阶段三：关键信息抽取 - 已完成
 
 目标：从简历文本中抽取结构化信息。
 
@@ -100,6 +100,15 @@ LLM_MODEL
 
 - 返回姓名、电话、邮箱、地址。
 - AI 返回异常时仍能返回可解释错误。
+
+完成记录：
+
+- 已新增 `services/llm_client.py`，支持 OpenAI-compatible Chat Completions API。
+- 已新增 `services/extractor.py`，支持电话、邮箱、姓名、地址、求职意向、期望薪资、工作年限的本地兜底抽取。
+- 已新增 `schemas/profile.py`，使用 Pydantic 校验结构化简历信息。
+- 已将 `POST /resumes/analyze` 响应扩展为返回 `profile` 和 `profile_extraction`。
+- 当 LLM 未配置、调用失败或返回结构异常时，接口返回本地兜底结果和可解释 warning。
+- 已通过 `uv run python -m compileall -q main.py app`、`pnpm lint`、`pnpm check-types`、`pnpm build`。
 
 ## 阶段四：岗位匹配评分
 

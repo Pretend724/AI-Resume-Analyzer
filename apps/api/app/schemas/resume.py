@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from app.schemas.profile import ProfileExtractionMetadata, ResumeProfile
+
 
 class ResumeSection(BaseModel):
     title: str = Field(min_length=1)
@@ -23,3 +25,5 @@ class ResumeAnalyzeResponse(BaseModel):
     resume_id: str = Field(min_length=1)
     file: ResumeFileInfo
     text: ResumeTextPayload
+    profile: ResumeProfile
+    profile_extraction: ProfileExtractionMetadata = Field(default_factory=ProfileExtractionMetadata)
