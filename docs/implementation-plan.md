@@ -2,7 +2,7 @@
 
 本文档描述从当前仓库状态到 MVP 可演示版本的推荐实现顺序。
 
-## 阶段一：后端基础服务
+## 阶段一：后端基础服务 - 已完成
 
 目标：让 `apps/api` 成为可运行的 FastAPI 服务。
 
@@ -36,6 +36,14 @@ uv run uvicorn app.main:app --reload --port 8000
 ```txt
 http://localhost:8000/health
 ```
+
+完成记录：
+
+- 已添加 FastAPI、uvicorn、pydantic、python-multipart。
+- 已建立 `app/main.py`、`app/routers/health.py`、`app/schemas/health.py`。
+- 已添加 `GET /health`，返回 `{ "status": "ok" }`。
+- 已将 `apps/api/package.json` 脚本调整为 uvicorn 启动。
+- 已通过 `uv run python -m py_compile ...`、`pnpm lint`、`pnpm check-types`、`pnpm build`。
 
 ## 阶段二：PDF 上传与解析
 
