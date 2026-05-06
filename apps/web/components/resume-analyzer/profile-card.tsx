@@ -34,7 +34,7 @@ export function ResumeProfileCard({
   const profile = analysis?.profile;
 
   return (
-    <Card>
+    <Card className="xl:col-span-2">
       <CardHeader>
         <CardTitle>关键信息</CardTitle>
         <CardDescription>

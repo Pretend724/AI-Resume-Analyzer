@@ -1,4 +1,4 @@
-import { BriefcaseBusinessIcon } from "lucide-react"
+import { BotMessageSquare, BriefcaseBusinessIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -116,7 +116,7 @@ export function ResumeMatchCard({
 
             {matchResult.scoring.rationale ? (
               <Alert>
-                <BriefcaseBusinessIcon />
+                <BotMessageSquare />
                 <AlertTitle>AI 评分依据</AlertTitle>
                 <AlertDescription>{matchResult.scoring.rationale}</AlertDescription>
               </Alert>

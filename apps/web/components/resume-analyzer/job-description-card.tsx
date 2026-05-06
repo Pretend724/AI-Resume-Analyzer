@@ -45,7 +45,7 @@ export function JobDescriptionCard({
               value={jobDescription}
               onChange={(event) => onChange(event.target.value)}
               placeholder="例如：负责 Next.js 前端开发，熟悉 TypeScript、组件化工程，有 3 年以上 Web 项目经验。"
-              className="min-h-44 resize-none"
+              className="min-h-60 resize-y max-h-160"
               aria-invalid={Boolean(jobDescription.length > 0 && !hasAnalysis)}
             />
             {!hasAnalysis && jobDescription.length > 0 ? (

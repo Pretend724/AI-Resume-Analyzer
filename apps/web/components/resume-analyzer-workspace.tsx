@@ -213,7 +213,9 @@ export function ResumeAnalyzerWorkspace() {
             </div>
 
             <div className="grid gap-5 xl:grid-cols-2">
-              <ResumeMatchCard matchResult={matchResult} isMatching={isMatching} />
+              <div className="xl:col-span-2">
+                <ResumeMatchCard matchResult={matchResult} isMatching={isMatching} />
+              </div>
               <ResultJsonCard analysis={analysis} matchResult={matchResult} />
             </div>
           </section>
