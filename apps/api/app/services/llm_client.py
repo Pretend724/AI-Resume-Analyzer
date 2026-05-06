@@ -1,9 +1,15 @@
 from dataclasses import dataclass
 import json
 import os
+from pathlib import Path
 import re
 
-import httpx
+from dotenv import load_dotenv
+from openai import AsyncOpenAI, OpenAIError
+
+
+DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
+ENV_FILE_PATH = Path(__file__).resolve().parents[2] / ".env"
 
 
 class LLMClientError(RuntimeError):
@@ -19,12 +25,23 @@ class LLMConfig:
 
     @property
     def is_configured(self) -> bool:
-        return bool(self.base_url.strip() and self.api_key.strip() and self.model.strip())
+        return not self.missing_fields
+
+    @property
+    def missing_fields(self) -> list[str]:
+        fields = []
+        if not self.api_key.strip():
+            fields.append("LLM_API_KEY")
+        if not self.model.strip():
+            fields.append("LLM_MODEL")
+        return fields
 
 
 def load_llm_config() -> LLMConfig:
+    load_dotenv(ENV_FILE_PATH, override=False)
+
     return LLMConfig(
-        base_url=os.getenv("LLM_BASE_URL", "").strip(),
+        base_url=os.getenv("LLM_BASE_URL", DEFAULT_OPENAI_BASE_URL).strip(),
         api_key=os.getenv("LLM_API_KEY", "").strip(),
         model=os.getenv("LLM_MODEL", "").strip(),
     )
@@ -37,37 +54,29 @@ async def call_chat_completion(
 ) -> str:
     resolved_config = config or load_llm_config()
     if not resolved_config.is_configured:
-        raise LLMClientError("LLM client is not configured.")
+        missing_fields = ", ".join(resolved_config.missing_fields)
+        raise LLMClientError(f"LLM client is not configured. Missing: {missing_fields}.")
 
-    payload = {
-        "model": resolved_config.model,
-        "messages": messages,
-        "temperature": 0.2,
-    }
-    headers = {
-        "Authorization": f"Bearer {resolved_config.api_key}",
-        "Content-Type": "application/json",
-    }
-    url = _build_chat_completions_url(resolved_config.base_url)
+    client = AsyncOpenAI(
+        api_key=resolved_config.api_key,
+        base_url=_normalize_openai_base_url(resolved_config.base_url),
+        timeout=resolved_config.timeout_seconds,
+    )
 
     try:
-        async with httpx.AsyncClient(timeout=resolved_config.timeout_seconds) as client:
-            response = await client.post(url, json=payload, headers=headers)
-            response.raise_for_status()
-    except httpx.HTTPError as exc:
+        response = await client.chat.completions.create(
+            model=resolved_config.model,
+            messages=messages,  # type: ignore[arg-type]
+            temperature=0.2,
+        )
+    except OpenAIError as exc:
         raise LLMClientError("Failed to call LLM provider.") from exc
 
-    try:
-        data = response.json()
-    except ValueError as exc:
-        raise LLMClientError("LLM provider returned invalid JSON.") from exc
-
-    choices = data.get("choices") or []
+    choices = response.choices
     if not choices:
         raise LLMClientError("LLM provider returned no choices.")
 
-    message = choices[0].get("message") or {}
-    content = message.get("content")
+    content = choices[0].message.content
     if not isinstance(content, str) or not content.strip():
         raise LLMClientError("LLM provider returned an empty message.")
 
@@ -97,8 +106,8 @@ def extract_json_payload(raw_text: str) -> dict[str, object]:
     return parsed
 
 
-def _build_chat_completions_url(base_url: str) -> str:
+def _normalize_openai_base_url(base_url: str) -> str:
     normalized_base_url = base_url.rstrip("/")
     if normalized_base_url.endswith("/chat/completions"):
-        return normalized_base_url
-    return f"{normalized_base_url}/chat/completions"
+        return normalized_base_url[: -len("/chat/completions")]
+    return normalized_base_url

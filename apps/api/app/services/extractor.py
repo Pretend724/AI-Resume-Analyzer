@@ -55,10 +55,13 @@ async def extract_resume_profile(cleaned_text: str) -> ResumeProfileExtractionRe
 
     config = load_llm_config()
     if not config.is_configured:
+        missing_fields = ", ".join(config.missing_fields)
         return ResumeProfileExtractionResult(
             profile=heuristic_profile,
             source="heuristic",
-            warnings=["LLM configuration is incomplete; used heuristic extraction."],
+            warnings=[
+                f"LLM configuration is incomplete; missing {missing_fields}; used heuristic extraction."
+            ],
         )
 
     try:
