@@ -28,6 +28,8 @@ POST /resumes/match
 Content-Type: application/json
 ```
 
+When LLM configuration is available, matching uses the rule-based keyword and experience analysis as evidence, then asks the configured model for a final score and recruiter-facing summary. The response field `scoring.source` indicates whether the final score came from `llm`, `rule_based`, or `llm_fallback`.
+
 ## LLM Configuration
 
 The API can enrich resume extraction through the official OpenAI Python SDK. OpenAI-compatible providers are supported through `LLM_BASE_URL`.

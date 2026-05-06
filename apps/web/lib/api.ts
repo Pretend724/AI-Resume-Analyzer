@@ -72,8 +72,14 @@ export type ResumeMatchResponse = {
   score_breakdown: {
     keyword_score: number
     experience_score: number
+    llm_score: number | null
   }
   summary: string
+  scoring: {
+    source: "rule_based" | "llm" | "llm_fallback"
+    warnings: string[]
+    rationale: string
+  }
 }
 
 type ApiErrorPayload = {

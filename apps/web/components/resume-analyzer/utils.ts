@@ -7,6 +7,15 @@ export const levelText: Record<ResumeMatchResponse["level"], string> = {
   weak: "弱匹配",
 }
 
+export const scoringSourceText: Record<
+  ResumeMatchResponse["scoring"]["source"],
+  string
+> = {
+  rule_based: "规则评分",
+  llm: "AI 评分",
+  llm_fallback: "AI 兜底",
+}
+
 export const extractionSourceText: Record<
   ResumeAnalyzeResponse["profile_extraction"]["source"],
   string

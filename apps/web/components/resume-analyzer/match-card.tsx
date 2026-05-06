@@ -14,7 +14,11 @@ import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 
 import { cn } from "@/lib/utils"
-import { levelText, levelTone } from "@/components/resume-analyzer/utils"
+import {
+  levelText,
+  levelTone,
+  scoringSourceText,
+} from "@/components/resume-analyzer/utils"
 import { EmptyState, KeywordList } from "@/components/resume-analyzer/shared"
 
 import type { ResumeMatchResponse } from "@/lib/api"
@@ -33,7 +37,9 @@ export function ResumeMatchCard({
       <CardHeader>
         <CardTitle>匹配评分</CardTitle>
         <CardDescription>
-          {matchResult ? levelText[matchResult.level] : "等待 JD"}
+          {matchResult
+            ? `${levelText[matchResult.level]} · ${scoringSourceText[matchResult.scoring.source]}`
+            : "等待 JD"}
         </CardDescription>
         <CardAction>
           {matchResult ? (
@@ -63,7 +69,7 @@ export function ResumeMatchCard({
               <Progress value={matchResult.score} className="mt-4" />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border p-3">
                 <div className="text-xs text-muted-foreground">关键词评分</div>
                 <div className="mt-1 text-2xl font-semibold">
@@ -74,6 +80,12 @@ export function ResumeMatchCard({
                 <div className="text-xs text-muted-foreground">经验评分</div>
                 <div className="mt-1 text-2xl font-semibold">
                   {matchResult.score_breakdown.experience_score}
+                </div>
+              </div>
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground">AI 评分</div>
+                <div className="mt-1 text-2xl font-semibold">
+                  {matchResult.score_breakdown.llm_score ?? "无"}
                 </div>
               </div>
             </div>
@@ -101,6 +113,24 @@ export function ResumeMatchCard({
                 {matchResult.experience_analysis.summary}
               </AlertDescription>
             </Alert>
+
+            {matchResult.scoring.rationale ? (
+              <Alert>
+                <BriefcaseBusinessIcon />
+                <AlertTitle>AI 评分依据</AlertTitle>
+                <AlertDescription>{matchResult.scoring.rationale}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            {matchResult.scoring.warnings.length > 0 ? (
+              <Alert>
+                <BriefcaseBusinessIcon />
+                <AlertTitle>评分提示</AlertTitle>
+                <AlertDescription>
+                  {matchResult.scoring.warnings.join("；")}
+                </AlertDescription>
+              </Alert>
+            ) : null}
           </div>
         ) : (
           <EmptyState

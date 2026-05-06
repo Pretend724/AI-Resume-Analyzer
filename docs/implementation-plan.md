@@ -138,6 +138,7 @@ services/matcher.py
 - 已新增 `POST /resumes/match`。
 - 已新增 `schemas/match.py`，定义岗位匹配请求、关键词分析、经验分析和评分响应模型。
 - 已新增 `services/matcher.py`，实现 JD 关键词提取、关键词覆盖率、工作年限相关性和综合评分。
+- 已将岗位匹配扩展为 LLM 增强评分：规则评分作为可解释依据，LLM 可覆盖最终综合分和摘要，失败时保留规则兜底。
 - 已返回 `score`、`level`、`keyword_analysis`、`experience_analysis`、`score_breakdown` 和 `summary`。
 - 已通过 FastAPI `TestClient` 验证 `/resumes/match` 接口。
 - 已通过 `uv run python -m compileall -q main.py app`、`pnpm lint`、`pnpm check-types`、`pnpm build`。
