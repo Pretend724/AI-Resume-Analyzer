@@ -21,6 +21,13 @@ POST /resumes/analyze
 Content-Type: multipart/form-data
 ```
 
+Match a resume against a job description:
+
+```txt
+POST /resumes/match
+Content-Type: application/json
+```
+
 ## LLM Configuration
 
 The API can enrich resume extraction through an OpenAI-compatible chat completions API.

@@ -4,8 +4,10 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from starlette.concurrency import run_in_threadpool
 
 from app.schemas.profile import ProfileExtractionMetadata
+from app.schemas.match import ResumeMatchRequest, ResumeMatchResponse
 from app.schemas.resume import ResumeAnalyzeResponse, ResumeFileInfo, ResumeSection, ResumeTextPayload
 from app.services.extractor import extract_resume_profile
+from app.services.matcher import match_resume_to_job
 from app.services.pdf_parser import EmptyPdfTextError, PdfParsingError, extract_pdf_text
 from app.services.text_cleaner import clean_resume_text, split_resume_sections
 
@@ -100,3 +102,22 @@ async def analyze_resume(file: UploadFile = File(...)) -> ResumeAnalyzeResponse:
             warnings=profile_result.warnings,
         ),
     )
+
+
+@router.post("/match", response_model=ResumeMatchResponse)
+async def match_resume(request: ResumeMatchRequest) -> ResumeMatchResponse:
+    if not request.resume_text.strip():
+        _raise_api_error(
+            400,
+            "EMPTY_RESUME_TEXT",
+            "Resume text is required.",
+        )
+
+    if not request.job_description.strip():
+        _raise_api_error(
+            400,
+            "EMPTY_JOB_DESCRIPTION",
+            "Job description is required.",
+        )
+
+    return match_resume_to_job(request)

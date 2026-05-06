@@ -110,7 +110,7 @@ LLM_MODEL
 - 当 LLM 未配置、调用失败或返回结构异常时，接口返回本地兜底结果和可解释 warning。
 - 已通过 `uv run python -m compileall -q main.py app`、`pnpm lint`、`pnpm check-types`、`pnpm build`。
 
-## 阶段四：岗位匹配评分
+## 阶段四：岗位匹配评分 - 已完成
 
 目标：完成 `POST /resumes/match`。
 
@@ -131,6 +131,15 @@ services/matcher.py
 
 - 输入 JD 后返回 `0-100` 分数。
 - 返回匹配关键词和缺失关键词。
+
+完成记录：
+
+- 已新增 `POST /resumes/match`。
+- 已新增 `schemas/match.py`，定义岗位匹配请求、关键词分析、经验分析和评分响应模型。
+- 已新增 `services/matcher.py`，实现 JD 关键词提取、关键词覆盖率、工作年限相关性和综合评分。
+- 已返回 `score`、`level`、`keyword_analysis`、`experience_analysis`、`score_breakdown` 和 `summary`。
+- 已通过 FastAPI `TestClient` 验证 `/resumes/match` 接口。
+- 已通过 `uv run python -m compileall -q main.py app`、`pnpm lint`、`pnpm check-types`、`pnpm build`。
 
 ## 阶段五：前端页面
 
