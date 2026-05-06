@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "uv run uvicorn app.main:app --reload --port 8001",
     "start": "uv run uvicorn app.main:app --host 0.0.0.0 --port 8000",
-    "build": "uv run python -m compileall -q main.py app",
-    "lint": "uv run python -m compileall -q main.py app",
-    "check-types": "uv run python -m compileall -q main.py app"
+    "build": "uv run python -m compileall -q main.py index.py app",
+    "lint": "uv run python -m compileall -q main.py index.py app",
+    "check-types": "uv run python -m compileall -q main.py index.py app"
   }
 }
