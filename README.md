@@ -2,6 +2,19 @@
 
 AI Resume Analyzer 是一个智能简历分析系统，支持上传 PDF 简历、提取结构化候选人信息，并结合岗位描述生成匹配度评分、关键词命中情况和分析摘要。
 
+## 界面预览
+
+### 1. 上传简历
+
+![上传简历](assets/upload-resume.jpeg)
+
+### 2. 查看解析
+
+![查看解析](assets/analysis.jpeg)
+
+### 3. 岗位评分
+
+![岗位评分](assets/match.jpeg)
 ## 项目架构
 
 ```txt
