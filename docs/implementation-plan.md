@@ -103,7 +103,8 @@ LLM_MODEL
 
 完成记录：
 
-- 已新增 `services/llm_client.py`，支持 OpenAI-compatible Chat Completions API。
+- 已新增 `services/llm_client.py`，通过 OpenAI Python SDK 支持 OpenAI-compatible Chat Completions API。
+- 已支持加载 `apps/api/.env` 中的 `LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL` 配置。
 - 已新增 `services/extractor.py`，支持电话、邮箱、姓名、地址、求职意向、期望薪资、工作年限的本地兜底抽取。
 - 已新增 `schemas/profile.py`，使用 Pydantic 校验结构化简历信息。
 - 已将 `POST /resumes/analyze` 响应扩展为返回 `profile` 和 `profile_extraction`。

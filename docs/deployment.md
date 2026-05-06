@@ -50,10 +50,12 @@ LLM_MODEL=qwen-plus
 MAX_UPLOAD_SIZE_MB=10
 ```
 
+本地开发时可写入 `apps/api/.env`；生产环境中应配置到 Serverless 环境变量。`LLM_BASE_URL` 兼容 OpenAI SDK 的 base URL，若使用官方 OpenAI 可省略。
+
 前端：
 
 ```txt
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8001
 ```
 
 生产环境中，密钥只配置在后端 Serverless 环境变量中，不暴露到前端。

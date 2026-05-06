@@ -96,7 +96,7 @@ MVP 阶段不使用 Vercel AI SDK 作为核心 AI 层。原因是项目后端采
 推荐方案：
 
 ```txt
-FastAPI -> LLM Client -> OpenAI-compatible API
+FastAPI -> OpenAI Python SDK -> OpenAI-compatible API
 ```
 
 通过环境变量配置：
@@ -108,6 +108,7 @@ LLM_MODEL
 ```
 
 这样可以灵活切换阿里云百炼/Qwen、DeepSeek、OpenAI 等服务。
+后端会加载 `apps/api/.env`，`LLM_BASE_URL` 未配置时默认使用 `https://api.openai.com/v1`。
 
 ## PDF 解析方案
 
