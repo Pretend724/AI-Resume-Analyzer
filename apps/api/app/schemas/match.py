@@ -31,6 +31,13 @@ class ExperienceAnalysis(BaseModel):
 class ScoreBreakdown(BaseModel):
     keyword_score: int = Field(ge=0, le=100)
     experience_score: int = Field(ge=0, le=100)
+    llm_score: int | None = Field(default=None, ge=0, le=100)
+
+
+class MatchScoringMetadata(BaseModel):
+    source: Literal["rule_based", "llm", "llm_fallback"] = "rule_based"
+    warnings: list[str] = Field(default_factory=list)
+    rationale: str = ""
 
 
 class ResumeMatchResponse(BaseModel):
@@ -40,3 +47,4 @@ class ResumeMatchResponse(BaseModel):
     experience_analysis: ExperienceAnalysis
     score_breakdown: ScoreBreakdown
     summary: str
+    scoring: MatchScoringMetadata = Field(default_factory=MatchScoringMetadata)

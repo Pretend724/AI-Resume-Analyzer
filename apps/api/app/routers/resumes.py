@@ -120,4 +120,4 @@ async def match_resume(request: ResumeMatchRequest) -> ResumeMatchResponse:
             "Job description is required.",
         )
 
-    return match_resume_to_job(request)
+    return await match_resume_to_job(request)

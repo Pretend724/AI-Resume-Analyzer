@@ -1,14 +1,22 @@
+from dataclasses import dataclass
 import re
 
 from app.schemas.match import (
     ExperienceAnalysis,
     KeywordAnalysis,
+    MatchScoringMetadata,
     MatchLevel,
     ResumeMatchRequest,
     ResumeMatchResponse,
     ScoreBreakdown,
 )
 from app.schemas.profile import ResumeProfile
+from app.services.llm_client import (
+    LLMClientError,
+    call_chat_completion,
+    extract_json_payload,
+    load_llm_config,
+)
 
 
 KEYWORD_ALIASES = {
@@ -68,9 +76,62 @@ STOPWORDS = {
     "相关",
 }
 STOPWORD_FRAGMENTS = ("经验", "年限", "年以上", "要求", "职责", "负责", "熟悉", "具有")
+MAX_LLM_RESUME_CHARS = 6000
+MAX_LLM_JOB_CHARS = 3000
 
 
-def match_resume_to_job(request: ResumeMatchRequest) -> ResumeMatchResponse:
+@dataclass(frozen=True, slots=True)
+class LLMMatchScore:
+    score: int
+    summary: str
+    rationale: str
+
+
+async def match_resume_to_job(request: ResumeMatchRequest) -> ResumeMatchResponse:
+    rule_based_response = build_rule_based_match_response(request)
+
+    config = load_llm_config()
+    if not config.is_configured:
+        missing_fields = ", ".join(config.missing_fields)
+        return rule_based_response.model_copy(
+            update={
+                "scoring": MatchScoringMetadata(
+                    source="rule_based",
+                    warnings=[
+                        f"LLM configuration is incomplete; missing {missing_fields}; used rule-based score."
+                    ],
+                )
+            }
+        )
+
+    try:
+        llm_score = await score_match_with_llm(request, rule_based_response)
+    except LLMClientError as exc:
+        return rule_based_response.model_copy(
+            update={
+                "scoring": MatchScoringMetadata(
+                    source="llm_fallback",
+                    warnings=[str(exc)],
+                )
+            }
+        )
+    return rule_based_response.model_copy(
+        update={
+            "score": llm_score.score,
+            "level": score_to_level(llm_score.score),
+            "score_breakdown": rule_based_response.score_breakdown.model_copy(
+                update={"llm_score": llm_score.score}
+            ),
+            "summary": llm_score.summary,
+            "scoring": MatchScoringMetadata(
+                source="llm",
+                rationale=llm_score.rationale,
+            ),
+        }
+    )
+
+
+def build_rule_based_match_response(request: ResumeMatchRequest) -> ResumeMatchResponse:
     resume_corpus = build_resume_corpus(request.resume_text, request.resume_profile)
     required_keywords = extract_job_keywords(request.job_description)
     matched_keywords = [
@@ -115,6 +176,80 @@ def match_resume_to_job(request: ResumeMatchRequest) -> ResumeMatchResponse:
         ),
         summary=build_match_summary(score, matched_keywords, missing_keywords, experience_analysis),
     )
+
+
+async def score_match_with_llm(
+    request: ResumeMatchRequest,
+    rule_based_response: ResumeMatchResponse,
+) -> LLMMatchScore:
+    llm_content = await call_chat_completion(
+        [
+            {
+                "role": "system",
+                "content": (
+                    "You are an expert technical recruiter. Score how well a resume "
+                    "matches a job description. Return only a JSON object."
+                ),
+            },
+            {
+                "role": "user",
+                "content": build_llm_match_prompt(request, rule_based_response),
+            },
+        ]
+    )
+    return parse_llm_match_score(llm_content)
+
+
+def build_llm_match_prompt(
+    request: ResumeMatchRequest,
+    rule_based_response: ResumeMatchResponse,
+) -> str:
+    return (
+        "Evaluate the candidate-job fit more accurately than simple keyword matching.\n"
+        "Consider skills, role relevance, seniority, project evidence, missing requirements, "
+        "and experience years. Use the rule-based analysis as evidence, but you may adjust "
+        "the final score when the resume context supports it.\n"
+        "Return only JSON with this schema:\n"
+        "{\n"
+        '  "score": 0,\n'
+        '  "summary": "A short Chinese summary for recruiters.",\n'
+        '  "rationale": "A short Chinese explanation of why this score was assigned."\n'
+        "}\n\n"
+        f"Rule-based analysis:\n{rule_based_response.model_dump_json(exclude_none=True)}\n\n"
+        f"Resume profile:\n{request.resume_profile.model_dump_json(exclude_none=True)}\n\n"
+        f"Job description:\n{request.job_description[:MAX_LLM_JOB_CHARS]}\n\n"
+        f"Resume text:\n{request.resume_text[:MAX_LLM_RESUME_CHARS]}"
+    )
+
+
+def parse_llm_match_score(raw_content: str) -> LLMMatchScore:
+    payload = extract_json_payload(raw_content)
+    score = _coerce_score(payload.get("score"))
+    summary = str(payload.get("summary") or "").strip()
+    rationale = str(payload.get("rationale") or "").strip()
+
+    if not summary:
+        raise LLMClientError("LLM match scoring response is missing summary.")
+
+    return LLMMatchScore(
+        score=score,
+        summary=summary,
+        rationale=rationale,
+    )
+
+
+def _coerce_score(value: object) -> int:
+    if isinstance(value, bool):
+        raise LLMClientError("LLM match scoring response has invalid score.")
+
+    if isinstance(value, (int, float)):
+        numeric_score = round(value)
+    elif isinstance(value, str) and re.fullmatch(r"\d+(?:\.\d+)?", value.strip()):
+        numeric_score = round(float(value))
+    else:
+        raise LLMClientError("LLM match scoring response has invalid score.")
+
+    return max(0, min(100, numeric_score))
 
 
 def build_resume_corpus(resume_text: str, profile: ResumeProfile) -> str:
