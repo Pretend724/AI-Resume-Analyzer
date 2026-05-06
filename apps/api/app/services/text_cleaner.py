@@ -12,18 +12,40 @@ SECTION_TITLE_MAP = (
     ("个人信息", "基本信息"),
     ("基本信息", "基本信息"),
     ("联系方式", "基本信息"),
+    ("personal information", "基本信息"),
+    ("basic information", "基本信息"),
+    ("contact", "基本信息"),
+    ("contact information", "基本信息"),
+    ("profile", "基本信息"),
     ("求职意向", "求职意向"),
+    ("objective", "求职意向"),
+    ("career objective", "求职意向"),
     ("工作经历", "工作经历"),
     ("工作经验", "工作经历"),
     ("实习经历", "工作经历"),
+    ("work experience", "工作经历"),
+    ("professional experience", "工作经历"),
+    ("employment history", "工作经历"),
+    ("experience", "工作经历"),
     ("教育经历", "教育背景"),
     ("教育背景", "教育背景"),
+    ("education", "教育背景"),
+    ("education background", "教育背景"),
     ("项目经历", "项目经历"),
     ("项目经验", "项目经历"),
+    ("projects", "项目经历"),
+    ("project experience", "项目经历"),
+    ("project", "项目经历"),
     ("专业技能", "技能栈"),
     ("技能", "技能栈"),
     ("技术栈", "技能栈"),
+    ("skills", "技能栈"),
+    ("technical skills", "技能栈"),
+    ("professional skills", "技能栈"),
+    ("tech stack", "技能栈"),
     ("自我评价", "自我评价"),
+    ("summary", "自我评价"),
+    ("self evaluation", "自我评价"),
 )
 
 
@@ -101,13 +123,15 @@ def split_resume_sections(cleaned_text: str) -> list[TextSection]:
 
 def _detect_heading(line: str) -> tuple[str | None, str]:
     heading_candidate = re.split(r"[:：]", line, maxsplit=1)[0].strip()
-    if not heading_candidate or len(heading_candidate) > 24:
+    if not heading_candidate or len(heading_candidate) > 40:
         return None, ""
 
+    normalized_heading = heading_candidate.lower()
     for keyword, title in SECTION_TITLE_MAP:
-        if keyword not in heading_candidate:
+        normalized_keyword = keyword.lower()
+        if normalized_keyword not in normalized_heading:
             continue
-        if heading_candidate != keyword and keyword not in heading_candidate:
+        if normalized_heading != normalized_keyword and normalized_keyword not in normalized_heading:
             continue
 
         heading_content = ""
