@@ -1,13 +1,13 @@
 # API 设计
 
-后端采用 RESTful API，返回 JSON。MVP 阶段接口保持无状态，不依赖数据库。
+后端采用 RESTful API，返回 JSON。服务保持无状态，不依赖数据库和文件持久化存储。
 
 ## 通用约定
 
-Base URL:
+本地 Base URL:
 
 ```txt
-http://localhost:8000
+http://localhost:8001
 ```
 
 生产环境通过部署平台域名提供。
@@ -35,6 +35,75 @@ http://localhost:8000
 }
 ```
 
+## LLM 配置接口
+
+### GET /llm/config
+
+读取当前后端使用的 LLM provider 配置状态。API Key 不会回传。
+
+响应：
+
+```json
+{
+  "base_url": "https://api.openai.com/v1",
+  "model": "gpt-4o-mini",
+  "is_configured": true,
+  "api_key_configured": true,
+  "missing_fields": [],
+  "source": "runtime"
+}
+```
+
+`source`:
+
+- `env`: 使用后端环境变量。
+- `runtime`: 使用页面提交的运行时配置。
+
+### PUT /llm/config
+
+保存运行时 LLM provider 配置。保存后当前后端进程的解析和评分都会使用该配置。
+
+请求：
+
+```json
+{
+  "base_url": "https://api.openai.com/v1",
+  "api_key": "your-api-key",
+  "model": "gpt-4o-mini"
+}
+```
+
+响应同 `GET /llm/config`。
+
+### POST /llm/config/test
+
+使用请求中的配置发起一次临时连接测试，不保存配置。
+
+请求：
+
+```json
+{
+  "base_url": "https://api.openai.com/v1",
+  "api_key": "your-api-key",
+  "model": "gpt-4o-mini"
+}
+```
+
+响应：
+
+```json
+{
+  "success": true,
+  "message": "OK"
+}
+```
+
+### DELETE /llm/config
+
+清除运行时配置，恢复使用后端环境变量。
+
+响应同 `GET /llm/config`。
+
 ## POST /resumes/analyze
 
 上传单个 PDF 简历，解析文本并抽取关键信息。
@@ -55,17 +124,19 @@ file: PDF file
 
 ```json
 {
-  "resume_id": "sha256-or-request-id",
+  "resume_id": "sha256",
   "file": {
     "filename": "resume.pdf",
-    "page_count": 2
+    "content_type": "application/pdf",
+    "page_count": 2,
+    "size_bytes": 204800
   },
   "text": {
     "raw": "...",
     "cleaned": "...",
     "sections": [
       {
-        "title": "工作经历",
+        "title": "项目经历",
         "content": "..."
       }
     ]
@@ -83,30 +154,30 @@ file: PDF file
     },
     "background": {
       "years_of_experience": "3年",
-      "education": [
-        {
-          "school": "某某大学",
-          "degree": "本科",
-          "major": "计算机科学与技术"
-        }
-      ],
-      "projects": [
-        {
-          "name": "智能简历分析系统",
-          "description": "..."
-        }
-      ]
+      "education": [],
+      "projects": []
     }
+  },
+  "profile_extraction": {
+    "source": "llm",
+    "warnings": []
   }
 }
 ```
 
+`profile_extraction.source`:
+
+- `heuristic`: 使用规则抽取。
+- `llm`: 使用 LLM 抽取并通过结构校验。
+- `llm_fallback`: LLM 调用或解析失败，返回规则兜底结果。
+
 可能错误：
 
 - `INVALID_FILE_TYPE`: 非 PDF 文件。
+- `EMPTY_UPLOAD`: 上传文件为空。
+- `FILE_TOO_LARGE`: 文件超过大小限制。
 - `EMPTY_PDF_TEXT`: PDF 中未提取到有效文本。
 - `PDF_PARSE_FAILED`: PDF 解析失败。
-- `LLM_RESPONSE_INVALID`: AI 返回无法解析为目标 JSON。
 
 ## POST /resumes/match
 
@@ -139,7 +210,7 @@ application/json
 
 ```json
 {
-  "score": 78,
+  "score": 82,
   "level": "good",
   "keyword_analysis": {
     "required_keywords": ["Python", "FastAPI", "RESTful API"],
@@ -149,26 +220,42 @@ application/json
   },
   "experience_analysis": {
     "is_relevant": true,
-    "summary": "候选人的后端项目经历与岗位要求相关。"
+    "required_years": 3,
+    "candidate_years": 5,
+    "summary": "岗位要求约 3 年经验，候选人体现约 5 年经验。"
   },
-  "summary": "候选人与岗位整体匹配度较高，但缓存和部署经验体现不足。"
+  "score_breakdown": {
+    "keyword_score": 67,
+    "experience_score": 100,
+    "llm_score": 82
+  },
+  "summary": "候选人与岗位整体匹配度较高，但缓存经验仍需进一步确认。",
+  "scoring": {
+    "source": "llm",
+    "warnings": [],
+    "rationale": "简历体现 Python 与 FastAPI 项目经验，经验年限满足要求。"
+  }
 }
 ```
 
-评分建议：
+`level`:
 
-- `90-100`: excellent
-- `75-89`: good
-- `60-74`: fair
-- `0-59`: weak
+- `excellent`: 90-100
+- `good`: 75-89
+- `fair`: 60-74
+- `weak`: 0-59
 
-## MVP 评分策略
+`scoring.source`:
 
-MVP 可先采用规则评分：
+- `rule_based`: 使用规则评分。
+- `llm`: 使用 LLM 增强评分。
+- `llm_fallback`: LLM 调用失败，返回规则评分。
 
-- 技能关键词覆盖率。
-- 岗位关键词覆盖率。
-- 工作年限或项目经验是否相关。
-- AI 生成简短解释，但不完全依赖 AI 产生分数。
+## 评分策略
 
-后续可升级为规则评分 + AI 评分融合。
+岗位匹配分为两个层次：
+
+1. 规则分析：提取岗位关键词，计算命中和缺失关键词，分析工作年限相关性。
+2. LLM 增强：把规则分析、简历文本、结构化信息和岗位描述提供给模型，由模型生成最终分数、摘要和评分依据。
+
+LLM 不可用时，系统保留规则评分和可解释 warning。
