@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 import { JobDescriptionCard } from "@/components/resume-analyzer/job-description-card"
+import { LLMConfigCard } from "@/components/resume-analyzer/llm-config-card"
 import { ResumeMatchCard } from "@/components/resume-analyzer/match-card"
 import { ResumeProfileCard } from "@/components/resume-analyzer/profile-card"
 import { ResultJsonCard } from "@/components/resume-analyzer/result-json-card"
@@ -147,6 +148,8 @@ export function ResumeAnalyzerWorkspace() {
 
         {currentStep === "upload" ? (
           <section className="mx-auto grid w-full max-w-2xl gap-5">
+            <LLMConfigCard onError={setError} />
+
             <ResumeUploadCard
               selectedFile={selectedFile}
               pageCount={analysis?.file.page_count}

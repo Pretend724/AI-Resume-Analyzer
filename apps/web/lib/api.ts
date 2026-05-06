@@ -82,6 +82,15 @@ export type ResumeMatchResponse = {
   }
 }
 
+export type LLMConfigResponse = {
+  base_url: string
+  model: string
+  is_configured: boolean
+  api_key_configured: boolean
+  missing_fields: string[]
+  source: "env" | "runtime"
+}
+
 type ApiErrorPayload = {
   error?: {
     code?: string
@@ -148,4 +157,37 @@ export async function matchResume(input: {
   })
 
   return readJson<ResumeMatchResponse>(response, "岗位匹配失败")
+}
+
+export async function getLLMConfig() {
+  const response = await fetch(`${API_BASE_URL}/llm/config`)
+  return readJson<LLMConfigResponse>(response, "读取 LLM 配置失败")
+}
+
+export async function updateLLMConfig(input: {
+  baseUrl: string
+  apiKey: string
+  model: string
+}) {
+  const response = await fetch(`${API_BASE_URL}/llm/config`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      base_url: input.baseUrl,
+      api_key: input.apiKey,
+      model: input.model,
+    }),
+  })
+
+  return readJson<LLMConfigResponse>(response, "保存 LLM 配置失败")
+}
+
+export async function resetLLMConfig() {
+  const response = await fetch(`${API_BASE_URL}/llm/config`, {
+    method: "DELETE",
+  })
+
+  return readJson<LLMConfigResponse>(response, "恢复默认 LLM 配置失败")
 }
