@@ -13,3 +13,10 @@ Health check:
 ```txt
 GET http://localhost:8000/health
 ```
+
+Analyze a resume:
+
+```txt
+POST /resumes/analyze
+Content-Type: multipart/form-data
+```

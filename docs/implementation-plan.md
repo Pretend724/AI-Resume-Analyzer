@@ -45,7 +45,7 @@ http://localhost:8000/health
 - 已将 `apps/api/package.json` 脚本调整为 uvicorn 启动。
 - 已通过 `uv run python -m py_compile ...`、`pnpm lint`、`pnpm check-types`、`pnpm build`。
 
-## 阶段二：PDF 上传与解析
+## 阶段二：PDF 上传与解析 - 已完成
 
 目标：完成 `POST /resumes/analyze` 的文件上传和文本解析。
 
@@ -68,6 +68,14 @@ services/text_cleaner.py
 
 - 上传文本型 PDF 可以返回页数和清洗文本。
 - 上传非 PDF 返回结构化错误。
+
+完成记录：
+
+- 已添加 `PyMuPDF` 作为 PDF 解析依赖。
+- 已新增 `POST /resumes/analyze`。
+- 已实现 PDF 文件校验、大小限制、逐页文本提取和清洗分段。
+- 已补充结构化错误响应和上传文件响应模型。
+- 已通过 `uv run python -m compileall -q main.py app`、`pnpm lint`、`pnpm check-types`、`pnpm build`。
 
 ## 阶段三：关键信息抽取
 
