@@ -1,0 +1,11 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "uv run main.py",
+    "build": "uv run python -m py_compile main.py",
+    "lint": "uv run python -m py_compile main.py",
+    "check-types": "uv run python -m py_compile main.py"
+  }
+}
