@@ -1,7 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 
-import { getApiBaseUrl } from "@/lib/api";
-
 export function WorkspaceHeader() {
   return (
     <header className="flex flex-col gap-3 rounded-xl border bg-background p-4 md:flex-row md:items-center md:justify-between">

@@ -13,7 +13,8 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 
-import { levelText } from "@/components/resume-analyzer/utils"
+import { cn } from "@/lib/utils"
+import { levelText, levelTone } from "@/components/resume-analyzer/utils"
 import { EmptyState, KeywordList } from "@/components/resume-analyzer/shared"
 
 import type { ResumeMatchResponse } from "@/lib/api"
@@ -25,6 +26,8 @@ export function ResumeMatchCard({
   matchResult: ResumeMatchResponse | null
   isMatching: boolean
 }) {
+  const tone = matchResult ? levelTone[matchResult.level] : null
+
   return (
     <Card>
       <CardHeader>
@@ -32,20 +35,30 @@ export function ResumeMatchCard({
         <CardDescription>
           {matchResult ? levelText[matchResult.level] : "等待 JD"}
         </CardDescription>
-        <CardAction>{matchResult ? <Badge>{matchResult.score} 分</Badge> : null}</CardAction>
+        <CardAction>
+          {matchResult ? (
+            <Badge variant="outline" className={tone?.badgeClassName}>
+              {matchResult.score} 分
+            </Badge>
+          ) : null}
+        </CardAction>
       </CardHeader>
       <CardContent>
         {isMatching ? (
           <EmptyState title="评分中" description="正在计算关键词和经验相关性。" />
         ) : matchResult ? (
           <div className="flex flex-col gap-4">
-            <div className="rounded-lg border bg-muted/20 p-4">
+            <div className={cn("rounded-lg border p-4", tone?.panelClassName)}>
               <div className="flex items-end justify-between gap-3">
                 <div>
                   <div className="text-sm text-muted-foreground">综合匹配度</div>
-                  <div className="mt-1 text-4xl font-semibold">{matchResult.score}</div>
+                  <div className={cn("mt-1 text-4xl font-semibold", tone?.scoreClassName)}>
+                    {matchResult.score}
+                  </div>
                 </div>
-                <Badge variant="outline">{levelText[matchResult.level]}</Badge>
+                <Badge variant="outline" className={tone?.badgeClassName}>
+                  {levelText[matchResult.level]}
+                </Badge>
               </div>
               <Progress value={matchResult.score} className="mt-4" />
             </div>

@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { JobDescriptionCard } from "@/components/resume-analyzer/job-description-card"
 import { ResumeMatchCard } from "@/components/resume-analyzer/match-card"
 import { ResumeProfileCard } from "@/components/resume-analyzer/profile-card"
+import { ResultJsonCard } from "@/components/resume-analyzer/result-json-card"
 import { ResumeTextCard } from "@/components/resume-analyzer/text-card"
 import { ResumeUploadCard } from "@/components/resume-analyzer/upload-card"
 import { WorkspaceHeader } from "@/components/resume-analyzer/workspace-header"
@@ -121,6 +122,7 @@ export function ResumeAnalyzerWorkspace() {
             <ResumeProfileCard analysis={analysis} isAnalyzing={isAnalyzing} />
             <ResumeMatchCard matchResult={matchResult} isMatching={isMatching} />
             <ResumeTextCard analysis={analysis} isAnalyzing={isAnalyzing} />
+            <ResultJsonCard analysis={analysis} matchResult={matchResult} />
           </div>
         </div>
       </div>
