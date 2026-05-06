@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.routers.health import router as health_router
+from app.routers.llm_config import router as llm_config_router
 from app.routers.resumes import router as resumes_router
 
 
@@ -84,6 +85,7 @@ def create_app() -> FastAPI:
         )
 
     app.include_router(health_router)
+    app.include_router(llm_config_router)
     app.include_router(resumes_router)
 
     return app

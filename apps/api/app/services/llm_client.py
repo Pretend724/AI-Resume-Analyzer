@@ -10,6 +10,7 @@ from openai import AsyncOpenAI, OpenAIError
 
 DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
 ENV_FILE_PATH = Path(__file__).resolve().parents[2] / ".env"
+_runtime_llm_config: "LLMConfig | None" = None
 
 
 class LLMClientError(RuntimeError):
@@ -38,6 +39,9 @@ class LLMConfig:
 
 
 def load_llm_config() -> LLMConfig:
+    if _runtime_llm_config is not None:
+        return _runtime_llm_config
+
     load_dotenv(ENV_FILE_PATH, override=False)
 
     return LLMConfig(
@@ -45,6 +49,21 @@ def load_llm_config() -> LLMConfig:
         api_key=os.getenv("LLM_API_KEY", "").strip(),
         model=os.getenv("LLM_MODEL", "").strip(),
     )
+
+
+def set_runtime_llm_config(config: LLMConfig) -> LLMConfig:
+    global _runtime_llm_config
+    _runtime_llm_config = config
+    return _runtime_llm_config
+
+
+def clear_runtime_llm_config() -> None:
+    global _runtime_llm_config
+    _runtime_llm_config = None
+
+
+def has_runtime_llm_config() -> bool:
+    return _runtime_llm_config is not None
 
 
 async def call_chat_completion(
