@@ -1,13 +1,23 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { BotMessageSquareIcon, LoaderCircleIcon, RotateCcwIcon, SaveIcon } from "lucide-react"
+import {
+  BotMessageSquareIcon,
+  CheckCircle2Icon,
+  LoaderCircleIcon,
+  PlugZapIcon,
+  RotateCcwIcon,
+  SaveIcon,
+  XCircleIcon,
+} from "lucide-react"
 
 import {
   getLLMConfig,
   resetLLMConfig,
+  testLLMConfig,
   updateLLMConfig,
   type LLMConfigResponse,
+  type LLMConfigTestResponse,
 } from "@/lib/api"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -40,7 +50,9 @@ export function LLMConfigCard({
   const [model, setModel] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isTesting, setIsTesting] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
+  const [testResult, setTestResult] = useState<LLMConfigTestResponse | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -74,11 +86,49 @@ export function LLMConfigCard({
     setBaseUrl(nextConfig.base_url)
     setModel(nextConfig.model)
     setApiKey("")
+    setTestResult(null)
+  }
+
+  function validateInput() {
+    if (!model.trim()) {
+      onError("请输入模型名称")
+      return false
+    }
+
+    if (!apiKey.trim()) {
+      onError("请输入 LLM API Key")
+      return false
+    }
+
+    return true
+  }
+
+  async function handleTest() {
+    if (!validateInput()) {
+      return
+    }
+
+    setIsTesting(true)
+    setTestResult(null)
+    try {
+      const result = await testLLMConfig({
+        baseUrl,
+        apiKey,
+        model,
+      })
+      setTestResult(result)
+    } catch (caughtError) {
+      setTestResult({
+        success: false,
+        message: caughtError instanceof Error ? caughtError.message : "测试 LLM 连接失败",
+      })
+    } finally {
+      setIsTesting(false)
+    }
   }
 
   async function handleSave() {
-    if (!apiKey.trim()) {
-      onError("请输入 LLM API Key")
+    if (!validateInput()) {
       return
     }
 
@@ -111,6 +161,7 @@ export function LLMConfigCard({
 
   const isConfigured = Boolean(config?.is_configured)
   const isRuntime = config?.source === "runtime"
+  const isBusy = isLoading || isSaving || isTesting || isResetting
 
   return (
     <Card>
@@ -140,9 +191,12 @@ export function LLMConfigCard({
             <Input
               id="llm-base-url"
               value={baseUrl}
-              onChange={(event) => setBaseUrl(event.target.value)}
+              onChange={(event) => {
+                setBaseUrl(event.target.value)
+                setTestResult(null)
+              }}
               placeholder="https://api.openai.com/v1"
-              disabled={isLoading || isSaving || isResetting}
+              disabled={isBusy}
             />
             <FieldDescription>OpenAI 或 OpenAI-compatible 服务地址</FieldDescription>
           </Field>
@@ -152,10 +206,13 @@ export function LLMConfigCard({
             <Input
               id="llm-model"
               value={model}
-              onChange={(event) => setModel(event.target.value)}
+              onChange={(event) => {
+                setModel(event.target.value)
+                setTestResult(null)
+              }}
               placeholder="gpt-4o-mini / qwen-plus / MiMo-V2.5-Pro"
               aria-invalid={!model.trim()}
-              disabled={isLoading || isSaving || isResetting}
+              disabled={isBusy}
             />
             {!model.trim() ? <FieldError>请输入模型名称</FieldError> : null}
           </Field>
@@ -166,18 +223,42 @@ export function LLMConfigCard({
               id="llm-api-key"
               type="password"
               value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
+              onChange={(event) => {
+                setApiKey(event.target.value)
+                setTestResult(null)
+              }}
               placeholder="请输入 API Key"
-              disabled={isLoading || isSaving || isResetting}
+              disabled={isBusy}
             />
             <FieldDescription>API Key 不会在页面中回显</FieldDescription>
           </Field>
 
+          {testResult ? (
+            <Alert variant={testResult.success ? "default" : "destructive"}>
+              {testResult.success ? <CheckCircle2Icon /> : <XCircleIcon />}
+              <AlertTitle>{testResult.success ? "连接成功" : "连接失败"}</AlertTitle>
+              <AlertDescription>{testResult.message}</AlertDescription>
+            </Alert>
+          ) : null}
+
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               type="button"
+              variant="outline"
+              onClick={handleTest}
+              disabled={isBusy || !model.trim()}
+            >
+              {isTesting ? (
+                <LoaderCircleIcon data-icon="inline-start" className="animate-spin" />
+              ) : (
+                <PlugZapIcon data-icon="inline-start" />
+              )}
+              测试连接
+            </Button>
+            <Button
+              type="button"
               onClick={handleSave}
-              disabled={isLoading || isSaving || isResetting || !model.trim()}
+              disabled={isBusy || !model.trim()}
             >
               {isSaving ? (
                 <LoaderCircleIcon data-icon="inline-start" className="animate-spin" />
@@ -190,7 +271,7 @@ export function LLMConfigCard({
               type="button"
               variant="outline"
               onClick={handleReset}
-              disabled={isLoading || isSaving || isResetting}
+              disabled={isBusy}
             >
               {isResetting ? (
                 <LoaderCircleIcon data-icon="inline-start" className="animate-spin" />

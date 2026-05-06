@@ -91,6 +91,11 @@ export type LLMConfigResponse = {
   source: "env" | "runtime"
 }
 
+export type LLMConfigTestResponse = {
+  success: boolean
+  message: string
+}
+
 type ApiErrorPayload = {
   error?: {
     code?: string
@@ -182,6 +187,26 @@ export async function updateLLMConfig(input: {
   })
 
   return readJson<LLMConfigResponse>(response, "保存 LLM 配置失败")
+}
+
+export async function testLLMConfig(input: {
+  baseUrl: string
+  apiKey: string
+  model: string
+}) {
+  const response = await fetch(`${API_BASE_URL}/llm/config/test`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      base_url: input.baseUrl,
+      api_key: input.apiKey,
+      model: input.model,
+    }),
+  })
+
+  return readJson<LLMConfigTestResponse>(response, "测试 LLM 连接失败")
 }
 
 export async function resetLLMConfig() {

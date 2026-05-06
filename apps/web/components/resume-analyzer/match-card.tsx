@@ -99,12 +99,12 @@ export function ResumeMatchCard({
               items={matchResult.keyword_analysis.matched_keywords}
               emptyText="暂无命中"
             />
-            <KeywordList
+            {/* <KeywordList
               title="缺失关键词"
               items={matchResult.keyword_analysis.missing_keywords}
               emptyText="无明显缺失"
               variant="outline"
-            />
+            /> */}
 
             <Alert>
               <BriefcaseBusinessIcon />
