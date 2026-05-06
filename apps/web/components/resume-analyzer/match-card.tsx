@@ -1,0 +1,101 @@
+import { BriefcaseBusinessIcon } from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
+
+import { levelText } from "@/components/resume-analyzer/utils"
+import { EmptyState, KeywordList } from "@/components/resume-analyzer/shared"
+
+import type { ResumeMatchResponse } from "@/lib/api"
+
+export function ResumeMatchCard({
+  matchResult,
+  isMatching,
+}: {
+  matchResult: ResumeMatchResponse | null
+  isMatching: boolean
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>匹配评分</CardTitle>
+        <CardDescription>
+          {matchResult ? levelText[matchResult.level] : "等待 JD"}
+        </CardDescription>
+        <CardAction>{matchResult ? <Badge>{matchResult.score} 分</Badge> : null}</CardAction>
+      </CardHeader>
+      <CardContent>
+        {isMatching ? (
+          <EmptyState title="评分中" description="正在计算关键词和经验相关性。" />
+        ) : matchResult ? (
+          <div className="flex flex-col gap-4">
+            <div className="rounded-lg border bg-muted/20 p-4">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <div className="text-sm text-muted-foreground">综合匹配度</div>
+                  <div className="mt-1 text-4xl font-semibold">{matchResult.score}</div>
+                </div>
+                <Badge variant="outline">{levelText[matchResult.level]}</Badge>
+              </div>
+              <Progress value={matchResult.score} className="mt-4" />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground">关键词评分</div>
+                <div className="mt-1 text-2xl font-semibold">
+                  {matchResult.score_breakdown.keyword_score}
+                </div>
+              </div>
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground">经验评分</div>
+                <div className="mt-1 text-2xl font-semibold">
+                  {matchResult.score_breakdown.experience_score}
+                </div>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground">{matchResult.summary}</p>
+
+            <Separator />
+
+            <KeywordList
+              title={`命中关键词 · ${Math.round(matchResult.keyword_analysis.match_rate * 100)}%`}
+              items={matchResult.keyword_analysis.matched_keywords}
+              emptyText="暂无命中"
+            />
+            <KeywordList
+              title="缺失关键词"
+              items={matchResult.keyword_analysis.missing_keywords}
+              emptyText="无明显缺失"
+              variant="outline"
+            />
+
+            <Alert>
+              <BriefcaseBusinessIcon />
+              <AlertTitle>经验相关性</AlertTitle>
+              <AlertDescription>
+                {matchResult.experience_analysis.summary}
+              </AlertDescription>
+            </Alert>
+          </div>
+        ) : (
+          <EmptyState
+            title="暂无匹配结果"
+            description="解析简历并输入 JD 后会展示评分、关键词和经验相关性。"
+          />
+        )}
+      </CardContent>
+    </Card>
+  )
+}

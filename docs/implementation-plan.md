@@ -141,7 +141,7 @@ services/matcher.py
 - 已通过 FastAPI `TestClient` 验证 `/resumes/match` 接口。
 - 已通过 `uv run python -m compileall -q main.py app`、`pnpm lint`、`pnpm check-types`、`pnpm build`。
 
-## 阶段五：前端页面
+## 阶段五：前端页面 - 已完成
 
 目标：完成可公开演示的单页交互。
 
@@ -165,6 +165,15 @@ services/matcher.py
 验收：
 
 - 可以从页面完成上传、解析、输入 JD、查看评分的完整流程。
+
+完成记录：
+
+- 已将 `apps/web/app/page.tsx` 替换为简历分析工作台入口。
+- 已新增 `components/resume-analyzer-workspace.tsx`，完成 PDF 上传、简历解析、JD 输入、岗位匹配评分、解析文本展示、错误与 loading 状态。
+- 已新增 `lib/api.ts`，封装 `POST /resumes/analyze` 和 `POST /resumes/match`，默认调用 `http://localhost:8001`，支持 `NEXT_PUBLIC_API_BASE_URL` 覆盖。
+- 已使用 shadcn/ui 的 `Button`、`Card`、`Textarea`、`Input`、`Badge`、`Progress`、`Alert`、`Skeleton`、`Field`、`Separator` 组合 MVP 页面。
+- 已更新页面 metadata 为 AI 简历分析系统。
+- 已通过 `pnpm --filter web lint`、`pnpm --filter web check-types`、`pnpm --filter web build`。
 
 ## 阶段六：部署准备
 

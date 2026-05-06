@@ -1,8 +1,6 @@
 
+import { ResumeAnalyzerWorkspace } from "@/components/resume-analyzer-workspace";
+
 export default function Home() {
-  return (
-    <div>
-      home page
-    </div>
-  );
+  return <ResumeAnalyzerWorkspace />;
 }
